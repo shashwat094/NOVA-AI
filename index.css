@@ -1,0 +1,13 @@
+/* Kept minimal on purpose — Nova (App.jsx) handles its own full theming
+   and includes a defensive reset, so nothing here should fight it. */
+* {
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #07080c;
+}
