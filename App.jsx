@@ -206,6 +206,7 @@ export default function Nova() {
   const [photo, setPhoto] = useState(DEFAULT_PHOTO);
   const [toast, setToast] = useState("");
   const [mouse, setMouse] = useState({ x: 50, y: 50 });
+  const [vh, setVh] = useState(() => (typeof window !== "undefined" ? window.innerHeight : 800));
   const scrollRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -221,6 +222,19 @@ export default function Nova() {
     }
     window.addEventListener("mousemove", onMove);
     return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
+  useEffect(() => {
+    function updateVh() {
+      setVh(window.innerHeight);
+    }
+    updateVh();
+    window.addEventListener("resize", updateVh);
+    window.addEventListener("orientationchange", updateVh);
+    return () => {
+      window.removeEventListener("resize", updateVh);
+      window.removeEventListener("orientationchange", updateVh);
+    };
   }, []);
 
   function autoGrow() {
@@ -309,7 +323,7 @@ export default function Nova() {
   const coreState = loading ? "thinking" : messages.length > 1 ? "active" : "idle";
 
   return (
-    <div className="nova-app" style={{ "--mx": `${mouse.x}%`, "--my": `${mouse.y}%` }}>
+    <div className="nova-app" style={{ "--mx": `${mouse.x}%`, "--my": `${mouse.y}%`, height: `${vh}px` }}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap');
 
