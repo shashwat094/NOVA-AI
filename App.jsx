@@ -74,7 +74,6 @@ export default function Nova() {
   const [messages, setMessages] = useState([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
-  const [vh, setVh] = useState(() => (typeof window !== "undefined" ? window.innerHeight : 800));
   const scrollRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -84,19 +83,8 @@ export default function Nova() {
   }, []);
 
   useEffect(() => {
-    scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: "smooth" });
+    scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, loading]);
-
-  useEffect(() => {
-    function updateVh() { setVh(window.innerHeight); }
-    updateVh();
-    window.addEventListener("resize", updateVh);
-    window.addEventListener("orientationchange", updateVh);
-    return () => {
-      window.removeEventListener("resize", updateVh);
-      window.removeEventListener("orientationchange", updateVh);
-    };
-  }, []);
 
   function autoGrow() {
     const el = textareaRef.current;
@@ -176,7 +164,7 @@ export default function Nova() {
   }
 
   return (
-    <div className="nova-app" style={{ height: `${vh}px` }}>
+    <div className="nova-app">
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
@@ -202,8 +190,8 @@ export default function Nova() {
           background: var(--bg);
           color: var(--text);
           position: relative;
-          overflow: hidden;
-          display: flex; flex-direction: column;
+          min-height: 100vh;
+          overflow-x: hidden;
         }
         .mono { font-family: 'JetBrains Mono', monospace; }
         .display { font-family: 'Space Grotesk', sans-serif; }
@@ -250,7 +238,12 @@ export default function Nova() {
         /* HEADER */
         .nova-header {
           display: flex; align-items: center; justify-content: space-between;
-          padding: 14px 22px; border-bottom: 1px solid var(--border); flex-shrink: 0;
+          padding: 14px 22px; border-bottom: 1px solid var(--border);
+          margin: 0; position: sticky; top: 0; z-index: 20; background: var(--bg);
+        }
+        .nova-header::after {
+          content: ''; position: absolute; left: 0; right: 0; bottom: -1px; height: 1px;
+          background: linear-gradient(90deg, transparent, var(--accent-glow), transparent);
         }
         .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
         .brand-mark {
@@ -300,24 +293,18 @@ export default function Nova() {
 
         .nova-body {
           max-width: 860px; margin: 0 auto; padding: 24px 22px; width: 100%;
-          flex: 1 1 auto; min-height: 0; overflow-y: auto;
-          display: flex; flex-direction: column;
         }
         @media (max-width: 640px) { .nova-body { padding: 16px 14px; } }
-        .nova-body::-webkit-scrollbar { width: 6px; }
-        .nova-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         .panel-fade { animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
         /* CHAT */
-        .chat-shell { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
+        .chat-shell { display: flex; flex-direction: column; min-height: 60vh; }
         .chat-scroll {
-          flex: 1; min-height: 0; overflow-y: auto; display: flex; flex-direction: column;
-          justify-content: flex-end; gap: 18px; padding-right: 2px;
+          display: flex; flex-direction: column; flex: 1;
+          justify-content: flex-end; gap: 18px;
         }
-        .chat-scroll::-webkit-scrollbar { width: 6px; }
-        .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
         .msg-row { display: flex; gap: 10px; max-width: 100%; animation: msgIn 0.25s ease; }
         @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
@@ -362,15 +349,13 @@ export default function Nova() {
           display: flex; gap: 8px; margin-top: 14px; padding: 8px;
           background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
           transition: border-color 0.15s;
+          position: sticky; bottom: 14px; box-shadow: 0 4px 20px #00000055;
         }
         .chat-input-row:focus-within { border-color: var(--text-faint); }
         @media (max-width: 640px) {
           .chat-input-row {
-            position: fixed; left: 14px; right: 14px;
             bottom: calc(58px + env(safe-area-inset-bottom) + 10px);
-            margin-top: 0; z-index: 25; box-shadow: 0 4px 20px #00000066;
           }
-          .chat-scroll { padding-bottom: 60px; }
         }
         .chat-input-row textarea {
           flex: 1; background: none; border: none; outline: none; resize: none;
@@ -398,6 +383,9 @@ export default function Nova() {
         .card h2 { font-family: 'Space Grotesk', sans-serif; font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin: 0 0 12px; }
         .card p { color: #c3c5cc; font-size: 13.8px; line-height: 1.65; margin: 0 0 10px; }
         .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+        .capability-list { display: flex; flex-direction: column; gap: 8px; margin: 6px 0 14px; }
+        .cap-item { display: flex; align-items: center; gap: 9px; font-size: 13.3px; color: #c3c5cc; }
+        .cap-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); flex-shrink: 0; }
         .tag {
           font-size: 11.5px; padding: 3px 9px; border-radius: 6px;
           background: var(--panel-2); border: 1px solid var(--border-soft); color: var(--text-dim);
@@ -499,7 +487,7 @@ export default function Nova() {
       <main className="nova-body">
         {tab === "chat" && (
           <div className="chat-shell panel-fade">
-            <div className="chat-scroll" ref={scrollRef}>
+            <div className="chat-scroll">
               {messages.map((m, i) => (
                 <div key={i} className={`msg-row ${m.role}`}>
                   <div className={`msg-icon ${m.role}`}>
@@ -523,6 +511,7 @@ export default function Nova() {
                   </div>
                 </div>
               )}
+              <div ref={scrollRef} />
             </div>
             <div className="chat-input-row">
               <textarea
@@ -553,8 +542,9 @@ export default function Nova() {
                   </div>
                 </div>
                 <h2>About</h2>
-                <p>Full-stack developer and co-founder of ChitrakootDhamTour, a live spiritual tourism booking platform. BCA graduate from Sadguru Institute of Computer Studies (MCU, Bhopal), with hands-on experience independently shipping production PHP/MySQL and React Native applications end to end.</p>
-                <p>Currently looking for software and web development internship opportunities.</p>
+                <p>Full-stack developer and co-founder of ChitrakootDhamTour, a live spiritual tourism booking platform serving real users. BCA graduate from Sadguru Institute of Computer Studies, affiliated with Makhanlal Chaturvedi National University, Bhopal (2023–2026).</p>
+                <p>Comfortable owning a project end to end — from schema design and backend logic through to a polished, production-ready frontend. Experience spans PHP/MySQL web platforms, React Native mobile apps, and modern React-based interfaces, with a consistent focus on shipping complete, working systems rather than partial prototypes.</p>
+                <p>Currently open to software and web development internship opportunities.</p>
                 <div className="tag-row">
                   <span className="tag">PHP</span><span className="tag">MySQL</span><span className="tag">React</span>
                   <span className="tag">React Native</span><span className="tag">Node.js</span><span className="tag">Firebase</span>
@@ -567,10 +557,17 @@ export default function Nova() {
               </div>
               <div className="card">
                 <h2>About Nova</h2>
-                <p>Nova is the AI assistant built into this site. It can help debug code, explain technical concepts, and answer questions about Shashwat's projects and background.</p>
-                <p>It runs on an open-weight language model through a serverless backend, with no persistent memory between sessions — each conversation starts fresh.</p>
+                <p>Nova is the AI assistant built into this site — designed to be a useful technical companion rather than a generic chatbot. It's tuned specifically around Shashwat's work, so it can speak knowledgeably about the projects, stack, and background on this page, in addition to general-purpose assistance.</p>
+                <p>Under the hood, Nova runs on Llama 3.3 70B, served through Groq's low-latency inference infrastructure, with a serverless function on Vercel acting as the API layer between the frontend and the model provider. This keeps the underlying API key secure server-side and keeps response times fast.</p>
+                <p>Nova does not retain memory between sessions — each conversation is stateless and starts fresh when the page reloads. There's also no persistent server-side logging of conversations; everything lives only in the current browser session.</p>
+                <div className="capability-list">
+                  <div className="cap-item"><span className="cap-dot" />Debugging and reviewing code across common web stacks</div>
+                  <div className="cap-item"><span className="cap-dot" />Explaining technical concepts at varying levels of depth</div>
+                  <div className="cap-item"><span className="cap-dot" />Answering questions about Shashwat's projects and experience</div>
+                  <div className="cap-item"><span className="cap-dot" />General-purpose conversation and assistance</div>
+                </div>
                 <div className="tag-row">
-                  <span className="tag">Llama 3.3 70B</span><span className="tag">Groq</span><span className="tag">React</span><span className="tag">Vercel</span>
+                  <span className="tag">Llama 3.3 70B</span><span className="tag">Groq</span><span className="tag">React</span><span className="tag">Vercel Functions</span>
                 </div>
               </div>
             </div>
