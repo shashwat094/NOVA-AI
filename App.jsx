@@ -178,7 +178,7 @@ export default function Nova() {
   return (
     <div className="nova-app" style={{ height: `${vh}px` }}>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
         * { box-sizing: border-box; }
         html, body, #root { margin: 0 !important; padding: 0 !important; height: 100% !important; width: 100% !important; background-color: #0b0c0f; }
@@ -193,6 +193,7 @@ export default function Nova() {
           --border-soft: #1e1f25;
           --accent: #5b7cfa;
           --accent-soft: #5b7cfa1a;
+          --accent-glow: #5b7cfa40;
           --text: #e8e9ec;
           --text-dim: #8b8d96;
           --text-faint: #5d5f68;
@@ -205,6 +206,24 @@ export default function Nova() {
           display: flex; flex-direction: column;
         }
         .mono { font-family: 'JetBrains Mono', monospace; }
+        .display { font-family: 'Space Grotesk', sans-serif; }
+
+        .mesh-bg {
+          position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden;
+        }
+        .mesh-blob {
+          position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.16;
+          animation: meshDrift 24s ease-in-out infinite alternate;
+        }
+        .mesh-blob.b1 { width: 420px; height: 420px; background: #5b7cfa; top: -10%; left: -8%; }
+        .mesh-blob.b2 { width: 380px; height: 380px; background: #7c5bfa; bottom: -12%; right: -6%; animation-delay: -8s; animation-duration: 30s; }
+        .mesh-blob.b3 { width: 300px; height: 300px; background: #5bd0fa; top: 40%; right: 20%; opacity: 0.08; animation-delay: -14s; animation-duration: 26s; }
+        @keyframes meshDrift {
+          from { transform: translate(0, 0) scale(1); }
+          to { transform: translate(40px, 30px) scale(1.08); }
+        }
+        @media (prefers-reduced-motion: reduce) { .mesh-blob { animation: none; } }
+        .nova-app > *:not(.mesh-bg) { position: relative; z-index: 1; }
 
         /* LOADING */
         .load-screen {
@@ -215,9 +234,11 @@ export default function Nova() {
         .load-screen.ready { opacity: 0; pointer-events: none; }
         .load-inner { display: flex; flex-direction: column; align-items: center; gap: 14px; }
         .load-mark {
-          width: 40px; height: 40px; border-radius: 10px; background: var(--accent);
+          width: 40px; height: 40px; border-radius: 10px;
+          background: linear-gradient(135deg, var(--accent), #7c5bfa);
+          box-shadow: 0 4px 20px var(--accent-glow);
           display: flex; align-items: center; justify-content: center; color: white;
-          font-weight: 700; font-size: 18px;
+          font-weight: 700; font-size: 18px; font-family: 'Space Grotesk', sans-serif;
         }
         .load-text { font-size: 13px; color: var(--text-dim); }
         .spinner {
@@ -233,21 +254,31 @@ export default function Nova() {
         }
         .brand { display: flex; align-items: center; gap: 11px; min-width: 0; }
         .brand-mark {
-          width: 32px; height: 32px; border-radius: 8px; background: var(--accent);
+          width: 32px; height: 32px; border-radius: 8px;
+          background: linear-gradient(135deg, var(--accent), #7c5bfa);
+          box-shadow: 0 2px 12px var(--accent-glow);
           display: flex; align-items: center; justify-content: center; color: white;
-          font-weight: 700; font-size: 15px; flex-shrink: 0;
+          font-weight: 700; font-size: 15px; font-family: 'Space Grotesk', sans-serif;
+          flex-shrink: 0; transition: transform 0.2s ease;
         }
-        .brand-text h1 { font-size: 15.5px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
+        .brand-mark:hover { transform: scale(1.06) rotate(-3deg); }
+        .brand-text h1 { font-family: 'Space Grotesk', sans-serif; font-size: 16px; font-weight: 600; margin: 0; letter-spacing: -0.01em; }
         .brand-text .sub { display: flex; align-items: center; gap: 6px; font-size: 11.5px; color: var(--text-dim); }
-        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 6px var(--green); animation: dotPulse 2s ease-in-out infinite; }
+        @keyframes dotPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
         .tabs { display: flex; gap: 2px; }
         .tab-btn {
           background: none; border: none; color: var(--text-dim); font-size: 13px; font-weight: 500;
-          padding: 7px 13px; border-radius: 7px; cursor: pointer; transition: all 0.15s;
+          padding: 7px 13px; border-radius: 7px; cursor: pointer; transition: all 0.15s; position: relative;
         }
         .tab-btn:hover { color: var(--text); background: var(--panel); }
+        .tab-btn:active { transform: scale(0.96); }
         .tab-btn.active { color: var(--text); background: var(--panel-2); }
+        .tab-btn.active::after {
+          content: ''; position: absolute; left: 13px; right: 13px; bottom: 2px; height: 2px;
+          border-radius: 2px; background: var(--accent);
+        }
         @media (max-width: 640px) { .tabs { display: none; } }
 
         .bottom-nav { display: none; }
@@ -276,8 +307,8 @@ export default function Nova() {
         .nova-body::-webkit-scrollbar { width: 6px; }
         .nova-body::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-        .panel-fade { animation: fadeIn 0.25s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        .panel-fade { animation: fadeIn 0.3s cubic-bezier(0.2, 0.8, 0.2, 1); }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
         /* CHAT */
         .chat-shell { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; }
@@ -288,7 +319,8 @@ export default function Nova() {
         .chat-scroll::-webkit-scrollbar { width: 6px; }
         .chat-scroll::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
 
-        .msg-row { display: flex; gap: 10px; max-width: 100%; }
+        .msg-row { display: flex; gap: 10px; max-width: 100%; animation: msgIn 0.25s ease; }
+        @keyframes msgIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
         .msg-row.user { flex-direction: row-reverse; }
         .msg-icon {
           width: 26px; height: 26px; border-radius: 7px; flex-shrink: 0;
@@ -318,7 +350,7 @@ export default function Nova() {
           font-size: 12.5px; color: var(--text-dim); background: var(--panel); border: 1px solid var(--border-soft);
           padding: 7px 12px; border-radius: 8px; cursor: pointer; transition: all 0.15s;
         }
-        .suggest-chip:hover { color: var(--text); border-color: var(--text-faint); }
+        .suggest-chip:hover { color: var(--text); border-color: var(--text-faint); transform: translateY(-2px); box-shadow: 0 4px 14px -6px var(--accent-glow); }
 
         .typing-dots { display: flex; gap: 4px; padding: 3px 0; }
         .typing-dots span { width: 5px; height: 5px; border-radius: 50%; background: var(--text-dim); animation: bounce 1.2s infinite; }
@@ -345,12 +377,14 @@ export default function Nova() {
           color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; padding: 7px 8px; max-height: 120px;
         }
         .chat-send {
-          background: var(--accent); border: none; color: white; width: 36px; height: 36px;
+          background: linear-gradient(135deg, var(--accent), #7c5bfa); border: none; color: white; width: 36px; height: 36px;
           border-radius: 8px; display: flex; align-items: center; justify-content: center; cursor: pointer;
-          transition: opacity 0.15s; flex-shrink: 0; align-self: flex-end;
+          transition: transform 0.12s ease, box-shadow 0.15s ease, opacity 0.15s ease; flex-shrink: 0; align-self: flex-end;
+          box-shadow: 0 2px 10px var(--accent-glow);
         }
-        .chat-send:hover:not(:disabled) { opacity: 0.9; }
-        .chat-send:disabled { opacity: 0.35; cursor: not-allowed; }
+        .chat-send:hover:not(:disabled) { transform: scale(1.06); box-shadow: 0 4px 16px var(--accent-glow); }
+        .chat-send:active:not(:disabled) { transform: scale(0.94); }
+        .chat-send:disabled { opacity: 0.35; cursor: not-allowed; box-shadow: none; }
         @media (max-width: 640px) { .chat-send { width: 42px; height: 42px; } }
 
         /* CARDS */
@@ -358,10 +392,10 @@ export default function Nova() {
         @media (max-width: 720px) { .grid-2 { grid-template-columns: 1fr; } }
         .card {
           background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px;
-          transition: border-color 0.15s;
+          transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
         }
-        .card:hover { border-color: var(--text-faint); }
-        .card h2 { font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin: 0 0 12px; }
+        .card:hover { border-color: var(--text-faint); transform: translateY(-3px); box-shadow: 0 10px 28px -14px var(--accent-glow); }
+        .card h2 { font-family: 'Space Grotesk', sans-serif; font-size: 12.5px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-dim); margin: 0 0 12px; }
         .card p { color: #c3c5cc; font-size: 13.8px; line-height: 1.65; margin: 0 0 10px; }
         .tag-row { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
         .tag {
@@ -372,7 +406,7 @@ export default function Nova() {
         .profile-head { display: flex; align-items: center; gap: 14px; margin-bottom: 16px; }
         .avatar { width: 60px; height: 60px; border-radius: 10px; overflow: hidden; flex-shrink: 0; border: 1px solid var(--border); }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
-        .profile-name h3 { margin: 0; font-size: 15.5px; font-weight: 600; }
+        .profile-name h3 { font-family: 'Space Grotesk', sans-serif; margin: 0; font-size: 16px; font-weight: 600; }
         .profile-name .role { color: var(--text-dim); font-size: 12.5px; }
         .status-pill {
           display: inline-flex; align-items: center; gap: 5px; font-size: 11px; color: var(--green);
@@ -389,7 +423,7 @@ export default function Nova() {
 
         /* SECTION HERO */
         .section-hero { padding: 6px 0 20px; }
-        .section-hero h2 { font-size: 18px; font-weight: 600; margin: 0 0 4px; letter-spacing: -0.01em; }
+        .section-hero h2 { font-family: 'Space Grotesk', sans-serif; font-size: 20px; font-weight: 600; margin: 0 0 5px; letter-spacing: -0.01em; }
         .section-hero p { color: var(--text-dim); font-size: 13.5px; margin: 0; }
 
         /* PROJECTS */
@@ -397,26 +431,33 @@ export default function Nova() {
         @media (max-width: 720px) { .proj-grid { grid-template-columns: 1fr; } }
         .proj-card {
           background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 18px;
-          display: flex; flex-direction: column; gap: 8px; transition: border-color 0.15s;
+          display: flex; flex-direction: column; gap: 8px;
+          transition: border-color 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+          animation: cardIn 0.4s ease both;
         }
-        .proj-card:hover { border-color: var(--text-faint); }
+        .proj-card:hover { border-color: var(--text-faint); transform: translateY(-3px); box-shadow: 0 10px 28px -14px var(--accent-glow); }
+        .proj-card:hover .proj-icon { background: var(--accent); color: white; }
         .proj-icon {
           width: 32px; height: 32px; border-radius: 8px; background: var(--accent-soft); color: var(--accent);
           display: flex; align-items: center; justify-content: center; margin-bottom: 2px;
+          transition: background 0.2s ease, color 0.2s ease;
         }
         .proj-top { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-        .proj-top h3 { font-size: 14.5px; font-weight: 600; margin: 0; }
+        .proj-top h3 { font-family: 'Space Grotesk', sans-serif; font-size: 15px; font-weight: 600; margin: 0; }
         .proj-tag { font-size: 10.5px; color: var(--text-dim); background: var(--panel-2); border: 1px solid var(--border-soft); padding: 2px 8px; border-radius: 5px; white-space: nowrap; }
         .proj-card p { color: #c3c5cc; font-size: 13.3px; line-height: 1.55; margin: 0; }
         .proj-link { color: var(--accent); font-size: 12.5px; text-decoration: none; display: flex; align-items: center; gap: 5px; margin-top: 4px; width: fit-content; font-weight: 500; }
         .proj-link:hover { text-decoration: underline; }
+        @keyframes cardIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
 
         /* SUPPORT */
         .support-card { text-align: center; }
         .support-icon {
           width: 38px; height: 38px; border-radius: 9px; background: var(--accent-soft); color: var(--accent);
           display: flex; align-items: center; justify-content: center; margin: 0 auto 12px;
+          transition: background 0.2s ease, color 0.2s ease;
         }
+        .card:hover .support-icon { background: var(--accent); color: white; }
         .contact-row {
           display: flex; align-items: center; gap: 8px; justify-content: center; font-size: 13px;
           color: #c3c5cc; margin-top: 8px; background: var(--panel-2); padding: 6px 12px; border-radius: 8px;
@@ -424,6 +465,12 @@ export default function Nova() {
 
         .footer-note { text-align: center; color: var(--text-faint); font-size: 11.5px; padding: 26px 0 8px; }
       `}</style>
+
+      <div className="mesh-bg">
+        <div className="mesh-blob b1" />
+        <div className="mesh-blob b2" />
+        <div className="mesh-blob b3" />
+      </div>
 
       <div className={`load-screen ${ready ? "ready" : ""}`}>
         <div className="load-inner">
@@ -537,8 +584,8 @@ export default function Nova() {
               <p>A selection of recent work.</p>
             </div>
             <div className="proj-grid">
-              {PROJECTS.map(p => (
-                <div className="proj-card" key={p.name}>
+              {PROJECTS.map((p, i) => (
+                <div className="proj-card" key={p.name} style={{ animationDelay: `${i * 0.08}s` }}>
                   <div className="proj-icon"><p.icon size={16} /></div>
                   <div className="proj-top">
                     <h3>{p.name}</h3>
