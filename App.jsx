@@ -300,7 +300,7 @@ export default function Nova() {
         @keyframes fadeIn { from { opacity: 0; transform: translateY(8px) scale(0.99); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
         /* CHAT */
-        .chat-shell { display: flex; flex-direction: column; min-height: 60vh; }
+        .chat-shell { display: flex; flex-direction: column; }
         .chat-scroll {
           display: flex; flex-direction: column; flex: 1;
           justify-content: flex-end; gap: 18px;
