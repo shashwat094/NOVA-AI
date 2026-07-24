@@ -346,17 +346,21 @@ export default function Nova() {
         @keyframes bounce { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-3px); opacity: 1; } }
 
         .chat-input-row {
-          display: flex; gap: 8px; margin-top: 14px; padding: 8px;
+          display: flex; gap: 8px; padding: 8px;
           background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
           transition: border-color 0.15s;
-          position: sticky; bottom: 14px; box-shadow: 0 4px 20px #00000055;
+          position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+          width: calc(100% - 44px); max-width: 816px; z-index: 25;
+          box-shadow: 0 4px 20px #00000066;
         }
         .chat-input-row:focus-within { border-color: var(--text-faint); }
         @media (max-width: 640px) {
           .chat-input-row {
             bottom: calc(58px + env(safe-area-inset-bottom) + 10px);
+            width: calc(100% - 28px);
           }
         }
+        .chat-scroll { padding-bottom: 76px; }
         .chat-input-row textarea {
           flex: 1; background: none; border: none; outline: none; resize: none;
           color: var(--text); font-family: 'Inter', sans-serif; font-size: 14px; padding: 7px 8px; max-height: 120px;
