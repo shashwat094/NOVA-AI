@@ -211,7 +211,7 @@ export default function Nova() {
           to { transform: translate(40px, 30px) scale(1.08); }
         }
         @media (prefers-reduced-motion: reduce) { .mesh-blob { animation: none; } }
-        .nova-app > *:not(.mesh-bg) { position: relative; z-index: 1; }
+        .nova-app > *:not(.mesh-bg):not(.load-screen) { position: relative; z-index: 1; }
 
         /* LOADING */
         .load-screen {
