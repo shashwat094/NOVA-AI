@@ -90,6 +90,7 @@ export default function Nova() {
   const [authName, setAuthName] = useState("");
   const [authBusy, setAuthBusy] = useState(false);
   const [authNotice, setAuthNotice] = useState("");
+  const [globalBanner, setGlobalBanner] = useState("");
   const scrollRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -173,6 +174,7 @@ export default function Nova() {
     else if (code.includes("user-not-found") || code.includes("invalid-credential") || code.includes("wrong-password")) msg = "Incorrect email or password.";
     else if (code.includes("too-many-requests")) msg = "Too many attempts — wait a bit and try again.";
     else if (code.includes("operation-not-allowed")) msg = "This sign-in method isn't enabled in Firebase yet. Turn it on under Authentication → Sign-in method.";
+    else if (code.includes("configuration-not-found")) msg = "Authentication hasn't been set up for this Firebase project yet. Go to Firebase Console → Authentication → click \"Get started\", then enable Google and Email/Password under Sign-in method.";
     else msg = "Sign-in failed.";
     return code ? `${msg} (${code})` : msg;
   }
@@ -194,8 +196,10 @@ export default function Nova() {
       const cred = await createUserWithEmailAndPassword(auth, authEmail.trim(), authPassword);
       if (authName.trim()) await updateProfile(cred.user, { displayName: authName.trim() });
       await sendEmailVerification(cred.user);
-      setAuthNotice("Account created — check your inbox for a verification link.");
       setAuthEmail(""); setAuthPassword(""); setAuthName("");
+      setAuthModalOpen(false);
+      setGlobalBanner("Account created — check your inbox for a verification link.");
+      setTimeout(() => setGlobalBanner(""), 7000);
     } catch (err) {
       console.error("Sign-up failed:", err);
       setAuthError(describeAuthError(err));
@@ -402,6 +406,12 @@ export default function Nova() {
         @keyframes dotPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
         .header-right { display: flex; align-items: center; gap: 14px; }
+        .global-banner {
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+          background: #34d39914; border-bottom: 1px solid #34d39930; color: var(--green);
+          font-size: 12.5px; padding: 9px 16px; text-align: center; animation: fadeIn 0.25s ease;
+        }
+        .global-banner-close { background: none; border: none; color: var(--green); cursor: pointer; padding: 2px; display: flex; }
         .tabs { display: flex; gap: 2px; }
         @media (max-width: 640px) { .tabs { display: none; } }
 
@@ -765,6 +775,13 @@ export default function Nova() {
           )}
         </div>
       </header>
+
+      {globalBanner && (
+        <div className="global-banner">
+          {globalBanner}
+          <button className="global-banner-close" onClick={() => setGlobalBanner("")}><X size={13} /></button>
+        </div>
+      )}
 
       {historyOpen && (
         <div className="modal-backdrop" onClick={() => setHistoryOpen(false)}>
