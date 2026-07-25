@@ -276,11 +276,12 @@ export default function Nova() {
 
         .bottom-nav { display: none; }
         @media (max-width: 640px) {
+          .nova-app { --nav-h: 58px; }
           .bottom-nav {
             display: flex; position: fixed; bottom: 0; left: 0; right: 0; z-index: 30;
             background: var(--bg); border-top: 1px solid var(--border);
             padding: 7px 6px calc(7px + env(safe-area-inset-bottom));
-            height: calc(58px + env(safe-area-inset-bottom));
+            height: calc(var(--nav-h) + env(safe-area-inset-bottom));
           }
           .bn-btn {
             flex: 1; display: flex; flex-direction: column; align-items: center; gap: 3px;
@@ -356,7 +357,7 @@ export default function Nova() {
         .chat-input-row:focus-within { border-color: var(--text-faint); }
         @media (max-width: 640px) {
           .chat-input-row {
-            bottom: calc(58px + env(safe-area-inset-bottom) + 10px);
+            bottom: calc(var(--nav-h) + env(safe-area-inset-bottom) + 10px);
             width: calc(100% - 28px);
           }
         }
