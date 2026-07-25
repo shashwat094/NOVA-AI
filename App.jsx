@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, User, Sparkles, Mail, Phone, ExternalLink, MessageSquare, UserCircle2, FolderGit2, HandHeart, Copy, Check, Globe, GraduationCap, Dumbbell, MessageCircle, LogOut, History, Plus, X, Clock } from "lucide-react";
-import { signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
+import { signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, createUserWithEmailAndPassword, signInWithEmailAndPassword, sendEmailVerification, updateProfile } from "firebase/auth";
 import { collection, addDoc, doc, setDoc, query, where, orderBy, getDocs, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "./firebase.js";
 const PROJECTS = [
@@ -85,6 +85,11 @@ export default function Nova() {
   const [authModalOpen, setAuthModalOpen] = useState(false);
   const [authTab, setAuthTab] = useState("login");
   const [authError, setAuthError] = useState("");
+  const [authEmail, setAuthEmail] = useState("");
+  const [authPassword, setAuthPassword] = useState("");
+  const [authName, setAuthName] = useState("");
+  const [authBusy, setAuthBusy] = useState(false);
+  const [authNotice, setAuthNotice] = useState("");
   const scrollRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -157,11 +162,19 @@ export default function Nova() {
 
   function describeAuthError(err) {
     const code = err?.code || "";
-    if (code.includes("unauthorized-domain")) return "This site's domain isn't authorized for sign-in yet. Add it under Firebase → Authentication → Settings → Authorized domains.";
-    if (code.includes("popup-blocked") || code.includes("cancelled-popup-request")) return "Sign-in was blocked. Try again.";
-    if (code.includes("network-request-failed")) return "Network error — check your connection and try again.";
-    if (code.includes("invalid-api-key") || code.includes("api-key-not-valid")) return "Firebase isn't configured yet — check firebase.js has your real project config.";
-    return "Sign-in failed. Please try again.";
+    let msg;
+    if (code.includes("unauthorized-domain")) msg = "This site's domain isn't authorized for sign-in yet. Add it under Firebase → Authentication → Settings → Authorized domains.";
+    else if (code.includes("popup-blocked") || code.includes("cancelled-popup-request")) msg = "Sign-in was blocked. Try again.";
+    else if (code.includes("network-request-failed")) msg = "Network error — check your connection and try again.";
+    else if (code.includes("invalid-api-key") || code.includes("api-key-not-valid")) msg = "Firebase isn't configured yet — check firebase.js has your real project config.";
+    else if (code.includes("email-already-in-use")) msg = "That email is already registered — try logging in instead.";
+    else if (code.includes("weak-password")) msg = "Password should be at least 6 characters.";
+    else if (code.includes("invalid-email")) msg = "That email address looks invalid.";
+    else if (code.includes("user-not-found") || code.includes("invalid-credential") || code.includes("wrong-password")) msg = "Incorrect email or password.";
+    else if (code.includes("too-many-requests")) msg = "Too many attempts — wait a bit and try again.";
+    else if (code.includes("operation-not-allowed")) msg = "This sign-in method isn't enabled in Firebase yet. Turn it on under Authentication → Sign-in method.";
+    else msg = "Sign-in failed.";
+    return code ? `${msg} (${code})` : msg;
   }
 
   async function handleGoogleSignIn() {
@@ -171,6 +184,38 @@ export default function Nova() {
     } catch (err) {
       console.error("Sign-in failed:", err);
       setAuthError(describeAuthError(err));
+    }
+  }
+
+  async function handleEmailSignUp(e) {
+    e.preventDefault();
+    setAuthError(""); setAuthNotice(""); setAuthBusy(true);
+    try {
+      const cred = await createUserWithEmailAndPassword(auth, authEmail.trim(), authPassword);
+      if (authName.trim()) await updateProfile(cred.user, { displayName: authName.trim() });
+      await sendEmailVerification(cred.user);
+      setAuthNotice("Account created — check your inbox for a verification link.");
+      setAuthEmail(""); setAuthPassword(""); setAuthName("");
+    } catch (err) {
+      console.error("Sign-up failed:", err);
+      setAuthError(describeAuthError(err));
+    } finally {
+      setAuthBusy(false);
+    }
+  }
+
+  async function handleEmailLogin(e) {
+    e.preventDefault();
+    setAuthError(""); setAuthNotice(""); setAuthBusy(true);
+    try {
+      await signInWithEmailAndPassword(auth, authEmail.trim(), authPassword);
+      setAuthModalOpen(false);
+      setAuthEmail(""); setAuthPassword("");
+    } catch (err) {
+      console.error("Login failed:", err);
+      setAuthError(describeAuthError(err));
+    } finally {
+      setAuthBusy(false);
     }
   }
 
@@ -443,6 +488,27 @@ export default function Nova() {
         .google-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px #ffffff22; }
         .google-btn:active { transform: scale(0.98); }
         .auth-footnote { font-size: 11.5px; color: var(--text-faint); margin: 0; text-align: center; }
+        .auth-notice {
+          font-size: 12.5px; color: var(--green); background: #34d39914; border: 1px solid #34d39930;
+          padding: 8px 10px; border-radius: 8px; line-height: 1.5;
+        }
+        .auth-form { display: flex; flex-direction: column; gap: 8px; }
+        .auth-input {
+          background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px;
+          padding: 10px 12px; font-size: 13.5px; color: var(--text); font-family: 'Inter', sans-serif;
+          outline: none; transition: border-color 0.15s;
+        }
+        .auth-input:focus { border-color: var(--accent); }
+        .auth-input::placeholder { color: var(--text-faint); }
+        .auth-submit-btn {
+          background: var(--accent); color: white; border: none; border-radius: 8px;
+          padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer; margin-top: 2px;
+          transition: opacity 0.15s;
+        }
+        .auth-submit-btn:hover:not(:disabled) { opacity: 0.9; }
+        .auth-submit-btn:disabled { opacity: 0.6; cursor: not-allowed; }
+        .auth-divider { display: flex; align-items: center; gap: 10px; color: var(--text-faint); font-size: 11.5px; }
+        .auth-divider::before, .auth-divider::after { content: ''; flex: 1; height: 1px; background: var(--border); }
         .tab-btn {
           background: none; border: none; color: var(--text-dim); font-size: 13px; font-weight: 500;
           padding: 7px 13px; border-radius: 7px; cursor: pointer; transition: all 0.15s; position: relative;
@@ -729,20 +795,30 @@ export default function Nova() {
               <button className="icon-btn" onClick={() => setAuthModalOpen(false)}><X size={16} /></button>
             </div>
             <div className="auth-tabs">
-              <button className={`auth-tab-btn ${authTab === "login" ? "active" : ""}`} onClick={() => { setAuthTab("login"); setAuthError(""); }}>Log In</button>
-              <button className={`auth-tab-btn ${authTab === "signup" ? "active" : ""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>Sign Up</button>
+              <button className={`auth-tab-btn ${authTab === "login" ? "active" : ""}`} onClick={() => { setAuthTab("login"); setAuthError(""); setAuthNotice(""); }}>Log In</button>
+              <button className={`auth-tab-btn ${authTab === "signup" ? "active" : ""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); setAuthNotice(""); }}>Sign Up</button>
             </div>
-            <p className="auth-copy">
-              {authTab === "login"
-                ? "Log in to save and revisit your chat history with Nova."
-                : "Create an account to start saving your conversations with Nova."}
-            </p>
+
             {authError && <div className="auth-error">{authError}</div>}
+            {authNotice && <div className="auth-notice">{authNotice}</div>}
+
+            <form className="auth-form" onSubmit={authTab === "login" ? handleEmailLogin : handleEmailSignUp}>
+              {authTab === "signup" && (
+                <input type="text" placeholder="Name" value={authName} onChange={e => setAuthName(e.target.value)} className="auth-input" />
+              )}
+              <input type="email" placeholder="Email" required value={authEmail} onChange={e => setAuthEmail(e.target.value)} className="auth-input" />
+              <input type="password" placeholder="Password" required minLength={6} value={authPassword} onChange={e => setAuthPassword(e.target.value)} className="auth-input" />
+              <button type="submit" className="auth-submit-btn" disabled={authBusy}>
+                {authBusy ? "Please wait..." : authTab === "login" ? "Log In" : "Create Account"}
+              </button>
+            </form>
+
+            <div className="auth-divider"><span>or</span></div>
+
             <button className="google-btn" onClick={handleGoogleSignIn}>
               <svg viewBox="0 0 48 48" width="16" height="16"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" /><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4c-7.7 0-14.4 4.3-17.7 10.7z" /><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.4l-6.3-5.3C29.4 34.9 26.8 36 24 36c-5.3 0-9.6-3.4-11.3-8.1l-6.5 5C9.5 39.6 16.2 44 24 44z" /><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.4l6.3 5.3C39.9 36.8 44 31 44 24c0-1.3-.1-2.7-.4-3.5z" /></svg>
               Continue with Google
             </button>
-            <p className="auth-footnote">Email &amp; password sign-in isn't set up yet — Google is the only method available right now.</p>
           </div>
         </div>
       )}
