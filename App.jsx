@@ -1,6 +1,8 @@
 import { useState, useRef, useEffect } from "react";
-import { Send, User, Sparkles, Mail, Phone, ExternalLink, MessageSquare, UserCircle2, FolderGit2, HandHeart, Copy, Check, Globe, GraduationCap, Dumbbell, MessageCircle } from "lucide-react";
-
+import { Send, User, Sparkles, Mail, Phone, ExternalLink, MessageSquare, UserCircle2, FolderGit2, HandHeart, Copy, Check, Globe, GraduationCap, Dumbbell, MessageCircle, LogOut, History, Plus, X, Clock } from "lucide-react";
+import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
+import { collection, addDoc, doc, setDoc, query, where, orderBy, getDocs, serverTimestamp } from "firebase/firestore";
+import { auth, googleProvider, db } from "./firebase.js";
 const PROJECTS = [
   {
     name: "ChitrakootDhamTour",
@@ -74,6 +76,12 @@ export default function Nova() {
   const [messages, setMessages] = useState([{ role: "assistant", content: GREETING }]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
+  const [user, setUser] = useState(null);
+  const [authLoading, setAuthLoading] = useState(true);
+  const [sessions, setSessions] = useState([]);
+  const [activeSessionId, setActiveSessionId] = useState(null);
+  const [historyOpen, setHistoryOpen] = useState(false);
+  const [userMenuOpen, setUserMenuOpen] = useState(false);
   const scrollRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -85,6 +93,74 @@ export default function Nova() {
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth", block: "end" });
   }, [messages, loading]);
+
+  useEffect(() => {
+    const unsub = onAuthStateChanged(auth, u => {
+      setUser(u);
+      setAuthLoading(false);
+      if (u) loadSessions(u.uid);
+      else { setSessions([]); setActiveSessionId(null); }
+    });
+    return () => unsub();
+  }, []);
+
+  async function loadSessions(uid) {
+    try {
+      const q = query(collection(db, "chatSessions"), where("uid", "==", uid), orderBy("updatedAt", "desc"));
+      const snap = await getDocs(q);
+      setSessions(snap.docs.map(d => ({ id: d.id, ...d.data() })));
+    } catch (err) {
+      console.error("Failed to load chat history:", err);
+    }
+  }
+
+  async function saveSession(sessionMessages) {
+    if (!user) return;
+    try {
+      const title = sessionMessages.find(m => m.role === "user")?.content?.slice(0, 48) || "New chat";
+      if (activeSessionId) {
+        await setDoc(doc(db, "chatSessions", activeSessionId), {
+          uid: user.uid, title, messages: sessionMessages, updatedAt: serverTimestamp(),
+        }, { merge: true });
+      } else {
+        const ref = await addDoc(collection(db, "chatSessions"), {
+          uid: user.uid, title, messages: sessionMessages,
+          createdAt: serverTimestamp(), updatedAt: serverTimestamp(),
+        });
+        setActiveSessionId(ref.id);
+      }
+      loadSessions(user.uid);
+    } catch (err) {
+      console.error("Failed to save chat session:", err);
+    }
+  }
+
+  function loadSession(session) {
+    setMessages(session.messages || [{ role: "assistant", content: GREETING }]);
+    setActiveSessionId(session.id);
+    setHistoryOpen(false);
+    setTab("chat");
+  }
+
+  function startNewChat() {
+    setMessages([{ role: "assistant", content: GREETING }]);
+    setActiveSessionId(null);
+    setHistoryOpen(false);
+  }
+
+  async function handleGoogleSignIn() {
+    try {
+      await signInWithPopup(auth, googleProvider);
+    } catch (err) {
+      console.error("Sign-in failed:", err);
+    }
+  }
+
+  async function handleSignOut() {
+    await signOut(auth);
+    setUserMenuOpen(false);
+    startNewChat();
+  }
 
   function autoGrow() {
     const el = textareaRef.current;
@@ -123,7 +199,9 @@ export default function Nova() {
         .map(block => (block.type === "text" ? block.text : ""))
         .filter(Boolean)
         .join("\n") || "⚠️ Got an empty reply — try rephrasing.";
+      const finalMessages = [...nextMessages, { role: "assistant", content: reply }];
       setMessages(m => [...m, { role: "assistant", content: reply }]);
+      if (user) saveSession(finalMessages);
     } catch (err) {
       setMessages(m => [...m, { role: "assistant", content: `⚠️ Connection failed: ${String(err.message || err)}` }]);
     } finally {
@@ -211,7 +289,7 @@ export default function Nova() {
           to { transform: translate(40px, 30px) scale(1.08); }
         }
         @media (prefers-reduced-motion: reduce) { .mesh-blob { animation: none; } }
-        .nova-app > *:not(.mesh-bg):not(.load-screen):not(.bottom-nav) { position: relative; z-index: 1; }
+        .nova-app > *:not(.mesh-bg):not(.load-screen):not(.bottom-nav):not(.modal-backdrop) { position: relative; z-index: 1; }
 
         /* LOADING */
         .load-screen {
@@ -260,7 +338,67 @@ export default function Nova() {
         .status-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--green); flex-shrink: 0; box-shadow: 0 0 6px var(--green); animation: dotPulse 2s ease-in-out infinite; }
         @keyframes dotPulse { 0%, 100% { opacity: 0.7; } 50% { opacity: 1; } }
 
+        .header-right { display: flex; align-items: center; gap: 14px; }
         .tabs { display: flex; gap: 2px; }
+        @media (max-width: 640px) { .tabs { display: none; } }
+
+        .signin-btn {
+          display: flex; align-items: center; gap: 8px; background: white; color: #1f1f1f;
+          border: none; border-radius: 8px; padding: 7px 14px; font-size: 13px; font-weight: 600;
+          cursor: pointer; transition: transform 0.12s ease, box-shadow 0.15s ease;
+        }
+        .signin-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px #ffffff22; }
+        .signin-btn:active { transform: scale(0.97); }
+
+        .user-menu-wrap { position: relative; }
+        .user-avatar-btn {
+          width: 32px; height: 32px; border-radius: 50%; overflow: hidden; border: 1px solid var(--border);
+          background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 13px;
+          display: flex; align-items: center; justify-content: center; cursor: pointer; padding: 0;
+        }
+        .user-avatar-btn img { width: 100%; height: 100%; object-fit: cover; }
+        .user-menu {
+          position: absolute; top: 42px; right: 0; z-index: 40; min-width: 190px;
+          background: var(--panel); border: 1px solid var(--border); border-radius: 10px;
+          padding: 6px; box-shadow: 0 12px 32px #00000066; animation: fadeIn 0.15s ease;
+        }
+        .user-menu-name { font-size: 12.5px; color: var(--text-dim); padding: 8px 10px 6px; border-bottom: 1px solid var(--border-soft); margin-bottom: 4px; word-break: break-word; }
+        .user-menu-item {
+          display: flex; align-items: center; gap: 8px; width: 100%; background: none; border: none;
+          color: var(--text); font-size: 13px; padding: 8px 10px; border-radius: 6px; cursor: pointer; text-align: left;
+        }
+        .user-menu-item:hover { background: var(--panel-2); }
+        .user-menu-item.danger { color: #f87171; }
+
+        .modal-backdrop {
+          position: fixed; inset: 0; z-index: 50; background: #00000099; backdrop-filter: blur(3px);
+          display: flex; align-items: center; justify-content: center; padding: 20px;
+        }
+        .history-panel {
+          width: 100%; max-width: 420px; max-height: 70vh; background: var(--panel);
+          border: 1px solid var(--border); border-radius: 14px; padding: 16px;
+          display: flex; flex-direction: column; gap: 10px;
+        }
+        .history-header { display: flex; align-items: center; justify-content: space-between; }
+        .history-header h3 { font-family: 'Space Grotesk', sans-serif; font-size: 15px; margin: 0; }
+        .icon-btn { background: none; border: none; color: var(--text-dim); cursor: pointer; padding: 4px; border-radius: 6px; }
+        .icon-btn:hover { color: var(--text); background: var(--panel-2); }
+        .new-chat-btn {
+          display: flex; align-items: center; gap: 7px; justify-content: center;
+          background: var(--accent-soft); color: var(--accent); border: 1px solid #5b7cfa33;
+          border-radius: 8px; padding: 9px; font-size: 13px; font-weight: 600; cursor: pointer;
+        }
+        .new-chat-btn:hover { background: #5b7cfa2c; }
+        .history-list { overflow-y: auto; display: flex; flex-direction: column; gap: 4px; }
+        .history-empty { color: var(--text-faint); font-size: 13px; text-align: center; padding: 20px 0; }
+        .history-item {
+          display: flex; align-items: center; gap: 8px; background: none; border: none;
+          color: var(--text-dim); font-size: 13px; padding: 9px 10px; border-radius: 8px; cursor: pointer;
+          text-align: left; width: 100%;
+        }
+        .history-item:hover { background: var(--panel-2); color: var(--text); }
+        .history-item.active { background: var(--accent-soft); color: var(--accent); }
+        .history-item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .tab-btn {
           background: none; border: none; color: var(--text-dim); font-size: 13px; font-weight: 500;
           padding: 7px 13px; border-radius: 7px; cursor: pointer; transition: all 0.15s; position: relative;
@@ -480,14 +618,65 @@ export default function Nova() {
             <span className="sub"><span className="status-dot"></span>AI Assistant · by Shashwat Pandey</span>
           </div>
         </div>
-        <nav className="tabs">
-          {TABS.map(t => (
-            <button key={t.id} className={`tab-btn ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
-              {t.label}
-            </button>
-          ))}
-        </nav>
+        <div className="header-right">
+          <nav className="tabs">
+            {TABS.map(t => (
+              <button key={t.id} className={`tab-btn ${tab === t.id ? "active" : ""}`} onClick={() => setTab(t.id)}>
+                {t.label}
+              </button>
+            ))}
+          </nav>
+          {!authLoading && (
+            user ? (
+              <div className="user-menu-wrap">
+                <button className="user-avatar-btn" onClick={() => setUserMenuOpen(o => !o)}>
+                  {user.photoURL ? <img src={user.photoURL} alt={user.displayName || "User"} /> : <span>{(user.displayName || "U")[0]}</span>}
+                </button>
+                {userMenuOpen && (
+                  <div className="user-menu">
+                    <div className="user-menu-name">{user.displayName || user.email}</div>
+                    <button className="user-menu-item" onClick={() => { setHistoryOpen(true); setUserMenuOpen(false); }}>
+                      <History size={14} /> Chat history
+                    </button>
+                    <button className="user-menu-item" onClick={() => { startNewChat(); setUserMenuOpen(false); }}>
+                      <Plus size={14} /> New chat
+                    </button>
+                    <button className="user-menu-item danger" onClick={handleSignOut}>
+                      <LogOut size={14} /> Sign out
+                    </button>
+                  </div>
+                )}
+              </div>
+            ) : (
+              <button className="signin-btn" onClick={handleGoogleSignIn}>
+                <svg viewBox="0 0 48 48" width="15" height="15"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" /><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4c-7.7 0-14.4 4.3-17.7 10.7z" /><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.4l-6.3-5.3C29.4 34.9 26.8 36 24 36c-5.3 0-9.6-3.4-11.3-8.1l-6.5 5C9.5 39.6 16.2 44 24 44z" /><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.4l6.3 5.3C39.9 36.8 44 31 44 24c0-1.3-.1-2.7-.4-3.5z" /></svg>
+                Sign in
+              </button>
+            )
+          )}
+        </div>
       </header>
+
+      {historyOpen && (
+        <div className="modal-backdrop" onClick={() => setHistoryOpen(false)}>
+          <div className="history-panel" onClick={e => e.stopPropagation()}>
+            <div className="history-header">
+              <h3>Chat history</h3>
+              <button className="icon-btn" onClick={() => setHistoryOpen(false)}><X size={16} /></button>
+            </div>
+            <button className="new-chat-btn" onClick={startNewChat}><Plus size={14} /> New chat</button>
+            <div className="history-list">
+              {sessions.length === 0 && <div className="history-empty">No saved conversations yet.</div>}
+              {sessions.map(s => (
+                <button key={s.id} className={`history-item ${activeSessionId === s.id ? "active" : ""}`} onClick={() => loadSession(s)}>
+                  <Clock size={13} />
+                  <span className="history-item-title">{s.title || "New chat"}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       <main className="nova-body">
         {tab === "chat" && (
