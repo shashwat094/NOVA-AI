@@ -742,7 +742,7 @@ export default function Nova() {
             <div className="grid-2">
               <div className="card">
                 <div className="profile-head">
-                  <div className="avatar"><img src={DEFAULT_PHOTO} alt="Shashwat Pandey" /></div>
+                  <div className="avatar"><img src="img.jpeg" alt="Shashwat Pandey" /></div>
                   <div className="profile-name">
                     <h3>Shashwat Pandey</h3>
                     <div className="role">Developer · Satna, MP</div>
