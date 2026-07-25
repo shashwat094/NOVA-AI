@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Send, User, Sparkles, Mail, Phone, ExternalLink, MessageSquare, UserCircle2, FolderGit2, HandHeart, Copy, Check, Globe, GraduationCap, Dumbbell, MessageCircle, LogOut, History, Plus, X, Clock } from "lucide-react";
-import { signInWithPopup, signOut, onAuthStateChanged } from "firebase/auth";
+import { signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged } from "firebase/auth";
 import { collection, addDoc, doc, setDoc, query, where, orderBy, getDocs, serverTimestamp } from "firebase/firestore";
 import { auth, googleProvider, db } from "./firebase.js";
 const PROJECTS = [
@@ -82,6 +82,9 @@ export default function Nova() {
   const [activeSessionId, setActiveSessionId] = useState(null);
   const [historyOpen, setHistoryOpen] = useState(false);
   const [userMenuOpen, setUserMenuOpen] = useState(false);
+  const [authModalOpen, setAuthModalOpen] = useState(false);
+  const [authTab, setAuthTab] = useState("login");
+  const [authError, setAuthError] = useState("");
   const scrollRef = useRef(null);
   const textareaRef = useRef(null);
 
@@ -100,6 +103,10 @@ export default function Nova() {
       setAuthLoading(false);
       if (u) loadSessions(u.uid);
       else { setSessions([]); setActiveSessionId(null); }
+    });
+    getRedirectResult(auth).catch(err => {
+      console.error("Redirect sign-in failed:", err);
+      setAuthError(describeAuthError(err));
     });
     return () => unsub();
   }, []);
@@ -148,11 +155,22 @@ export default function Nova() {
     setHistoryOpen(false);
   }
 
+  function describeAuthError(err) {
+    const code = err?.code || "";
+    if (code.includes("unauthorized-domain")) return "This site's domain isn't authorized for sign-in yet. Add it under Firebase → Authentication → Settings → Authorized domains.";
+    if (code.includes("popup-blocked") || code.includes("cancelled-popup-request")) return "Sign-in was blocked. Try again.";
+    if (code.includes("network-request-failed")) return "Network error — check your connection and try again.";
+    if (code.includes("invalid-api-key") || code.includes("api-key-not-valid")) return "Firebase isn't configured yet — check firebase.js has your real project config.";
+    return "Sign-in failed. Please try again.";
+  }
+
   async function handleGoogleSignIn() {
+    setAuthError("");
     try {
-      await signInWithPopup(auth, googleProvider);
+      await signInWithRedirect(auth, googleProvider);
     } catch (err) {
       console.error("Sign-in failed:", err);
+      setAuthError(describeAuthError(err));
     }
   }
 
@@ -399,6 +417,32 @@ export default function Nova() {
         .history-item:hover { background: var(--panel-2); color: var(--text); }
         .history-item.active { background: var(--accent-soft); color: var(--accent); }
         .history-item-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+        .auth-panel {
+          width: 100%; max-width: 380px; background: var(--panel);
+          border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+          display: flex; flex-direction: column; gap: 12px;
+        }
+        .auth-tabs { display: flex; gap: 4px; background: var(--panel-2); padding: 4px; border-radius: 9px; }
+        .auth-tab-btn {
+          flex: 1; background: none; border: none; color: var(--text-dim); font-size: 13px; font-weight: 500;
+          padding: 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s;
+        }
+        .auth-tab-btn.active { background: var(--panel); color: var(--text); }
+        .auth-copy { color: var(--text-dim); font-size: 13px; line-height: 1.55; margin: 0; }
+        .auth-error {
+          font-size: 12.5px; color: #f87171; background: #f8717114; border: 1px solid #f8717133;
+          padding: 8px 10px; border-radius: 8px; line-height: 1.5;
+        }
+        .google-btn {
+          display: flex; align-items: center; justify-content: center; gap: 10px;
+          background: white; color: #1f1f1f; border: none; border-radius: 8px;
+          padding: 10px; font-size: 13.5px; font-weight: 600; cursor: pointer;
+          transition: transform 0.12s ease, box-shadow 0.15s ease;
+        }
+        .google-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 14px #ffffff22; }
+        .google-btn:active { transform: scale(0.98); }
+        .auth-footnote { font-size: 11.5px; color: var(--text-faint); margin: 0; text-align: center; }
         .tab-btn {
           background: none; border: none; color: var(--text-dim); font-size: 13px; font-weight: 500;
           padding: 7px 13px; border-radius: 7px; cursor: pointer; transition: all 0.15s; position: relative;
@@ -648,8 +692,7 @@ export default function Nova() {
                 )}
               </div>
             ) : (
-              <button className="signin-btn" onClick={handleGoogleSignIn}>
-                <svg viewBox="0 0 48 48" width="15" height="15"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" /><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4c-7.7 0-14.4 4.3-17.7 10.7z" /><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.4l-6.3-5.3C29.4 34.9 26.8 36 24 36c-5.3 0-9.6-3.4-11.3-8.1l-6.5 5C9.5 39.6 16.2 44 24 44z" /><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.4l6.3 5.3C39.9 36.8 44 31 44 24c0-1.3-.1-2.7-.4-3.5z" /></svg>
+              <button className="signin-btn" onClick={() => { setAuthModalOpen(true); setAuthTab("login"); setAuthError(""); }}>
                 Sign in
               </button>
             )
@@ -674,6 +717,32 @@ export default function Nova() {
                 </button>
               ))}
             </div>
+          </div>
+        </div>
+      )}
+
+      {authModalOpen && (
+        <div className="modal-backdrop" onClick={() => setAuthModalOpen(false)}>
+          <div className="auth-panel" onClick={e => e.stopPropagation()}>
+            <div className="history-header">
+              <h3>{authTab === "login" ? "Log in to Nova" : "Create an account"}</h3>
+              <button className="icon-btn" onClick={() => setAuthModalOpen(false)}><X size={16} /></button>
+            </div>
+            <div className="auth-tabs">
+              <button className={`auth-tab-btn ${authTab === "login" ? "active" : ""}`} onClick={() => { setAuthTab("login"); setAuthError(""); }}>Log In</button>
+              <button className={`auth-tab-btn ${authTab === "signup" ? "active" : ""}`} onClick={() => { setAuthTab("signup"); setAuthError(""); }}>Sign Up</button>
+            </div>
+            <p className="auth-copy">
+              {authTab === "login"
+                ? "Log in to save and revisit your chat history with Nova."
+                : "Create an account to start saving your conversations with Nova."}
+            </p>
+            {authError && <div className="auth-error">{authError}</div>}
+            <button className="google-btn" onClick={handleGoogleSignIn}>
+              <svg viewBox="0 0 48 48" width="16" height="16"><path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.7 32.9 29.3 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20 20-8.9 20-20c0-1.3-.1-2.7-.4-3.5z" /><path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.6 15.9 18.9 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.5 6.1 29.5 4 24 4c-7.7 0-14.4 4.3-17.7 10.7z" /><path fill="#4CAF50" d="M24 44c5.3 0 10.1-2 13.7-5.4l-6.3-5.3C29.4 34.9 26.8 36 24 36c-5.3 0-9.6-3.4-11.3-8.1l-6.5 5C9.5 39.6 16.2 44 24 44z" /><path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-.8 2.2-2.2 4.1-4 5.4l6.3 5.3C39.9 36.8 44 31 44 24c0-1.3-.1-2.7-.4-3.5z" /></svg>
+              Continue with Google
+            </button>
+            <p className="auth-footnote">Email &amp; password sign-in isn't set up yet — Google is the only method available right now.</p>
           </div>
         </div>
       )}

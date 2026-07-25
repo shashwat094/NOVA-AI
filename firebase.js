@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getAnalytics } from "firebase/analytics";
+import { getAnalytics, isSupported as analyticsIsSupported } from "firebase/analytics";
 import { getAuth, GoogleAuthProvider } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
 
@@ -23,5 +23,13 @@ export const googleProvider = new GoogleAuthProvider();
 // Firestore Database
 export const db = getFirestore(app);
 
-// Analytics
-export const analytics = getAnalytics(app);
+// Analytics — guarded with isSupported() so it never crashes the app in browsers
+// or contexts (ad-blockers, some in-app browsers) where Analytics isn't available.
+export let analytics = null;
+analyticsIsSupported()
+  .then(supported => {
+    if (supported) analytics = getAnalytics(app);
+  })
+  .catch(() => {
+    // Analytics unsupported in this environment — safe to ignore, rest of the app is unaffected.
+  });
