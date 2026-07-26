@@ -1,5 +1,12 @@
 // Proxies chat requests to Groq (free tier, no card required) and reshapes
 // the response to match what the frontend expects, so App.jsx never has to change.
+//
+// Model note: this uses openai/gpt-oss-120b. Groq deprecated llama-3.3-70b-versatile
+// (shutdown 08/16/2026) — see https://console.groq.com/docs/deprecations. If you'd
+// rather use a different model, just change MODEL below; any Groq chat-completions
+// model ID will work.
+const MODEL = "openai/gpt-oss-120b";
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' });
@@ -26,7 +33,7 @@ export default async function handler(req, res) {
         Authorization: `Bearer ${process.env.GROQ_API_KEY}`,
       },
       body: JSON.stringify({
-        model: 'llama-3.3-70b-versatile',
+        model: MODEL,
         messages: groqMessages,
         max_tokens: max_tokens || 1000,
       }),
