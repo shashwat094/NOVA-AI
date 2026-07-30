@@ -762,26 +762,36 @@ export default function Nova() {
         @import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
         * { box-sizing: border-box; }
-        html, body, #root { margin: 0 !important; padding: 0 !important; height: 100% !important; width: 100% !important; background-color: #0b0c0f; }
+        html, body, #root { margin: 0 !important; padding: 0 !important; height: 100% !important; width: 100% !important; background-color: #232c62; }
         body { display: block !important; place-items: unset !important; min-width: 0 !important; }
         #root { max-width: none !important; width: 100% !important; text-align: left !important; border: none !important; }
 
         .nova-app {
-          --bg: #0b0c0f;
-          --panel: #141519;
-          --panel-2: #1a1b20;
-          --border: #26272e;
-          --border-soft: #1e1f25;
-          --accent: #5b7cfa;
-          --accent-soft: #5b7cfa1a;
-          --accent-glow: #5b7cfa40;
-          --text: #e8e9ec;
-          --text-dim: #8b8d96;
-          --text-faint: #5d5f68;
-          --green: #34d399;
-          --amber: #f59e0b;
+          --bg: #232c62;
+          --bg-2: #1b2350;
+          --panel: rgba(255,255,255,0.09);
+          --panel-2: rgba(255,255,255,0.15);
+          --border: rgba(255,255,255,0.20);
+          --border-soft: rgba(255,255,255,0.08);
+          --accent: #8ea2ff;
+          --accent-2: #ff7ad9;
+          --accent-3: #4ee2f5;
+          --accent-soft: rgba(142,162,255,0.16);
+          --accent-glow: rgba(142,162,255,0.45);
+          --text: #f4f6ff;
+          --text-dim: #b9c0e0;
+          --text-faint: #8b93bb;
+          --green: #4ef0b0;
+          --amber: #ffc857;
+          --grad: linear-gradient(120deg, #8ea2ff 0%, #b57cff 35%, #ff7ad9 70%, #4ee2f5 100%);
           font-family: 'Inter', -apple-system, sans-serif;
-          background: var(--bg);
+          background:
+            radial-gradient(1100px 760px at 10% -8%, rgba(126,152,255,0.55), transparent 62%),
+            radial-gradient(1000px 700px at 92% 4%, rgba(255,110,214,0.42), transparent 62%),
+            radial-gradient(900px 720px at 50% 108%, rgba(64,225,244,0.40), transparent 62%),
+            radial-gradient(700px 520px at 78% 62%, rgba(178,120,255,0.38), transparent 65%),
+            linear-gradient(180deg, #232c62 0%, #2a2f74 40%, #1d2456 100%);
+          background-attachment: fixed;
           color: var(--text);
           position: relative;
           min-height: 100vh;
@@ -794,16 +804,28 @@ export default function Nova() {
           position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden;
         }
         .mesh-blob {
-          position: absolute; border-radius: 50%; filter: blur(80px); opacity: 0.16;
+          position: absolute; border-radius: 50%; filter: blur(90px); opacity: 0.55;
           animation: meshDrift 24s ease-in-out infinite alternate;
         }
-        .mesh-blob.b1 { width: 420px; height: 420px; background: #5b7cfa; top: -10%; left: -8%; }
-        .mesh-blob.b2 { width: 380px; height: 380px; background: #7c5bfa; bottom: -12%; right: -6%; animation-delay: -8s; animation-duration: 30s; }
-        .mesh-blob.b3 { width: 300px; height: 300px; background: #5bd0fa; top: 40%; right: 20%; opacity: 0.08; animation-delay: -14s; animation-duration: 26s; }
+        .mesh-blob.b1 { width: 520px; height: 520px; background: #7c8cff; top: -10%; left: -8%; }
+        .mesh-blob.b2 { width: 380px; height: 380px; background: #ff7ad9; bottom: -12%; right: -6%; animation-delay: -8s; animation-duration: 30s; }
+        .mesh-blob.b3 { width: 300px; height: 300px; background: #4ee2f5; top: 36%; right: 18%; opacity: 0.3; animation-delay: -14s; animation-duration: 26s; }
         @keyframes meshDrift {
           from { transform: translate(0, 0) scale(1); }
           to { transform: translate(40px, 30px) scale(1.08); }
         }
+        .proj-card > *:first-child { position: relative; z-index: 1; }
+        .proj-card::after {
+          content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+          background: var(--grad); background-size: 200% auto; animation: shimmer 5s linear infinite;
+          opacity: .85;
+        }
+        .nova-header::after {
+          content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+          background: var(--grad); background-size: 200% auto; animation: shimmer 6s linear infinite; opacity: .9;
+        }
+        .load-screen { background: linear-gradient(160deg, #232c62, #3a2a7a 60%, #1d2456) !important; }
+
         @media (prefers-reduced-motion: reduce) { .mesh-blob { animation: none; } }
         /* mesh-bg uses z-index: -1 above (not a blanket z-index rule on every child) so
            it stays pinned behind all normal content without trapping the header's own
@@ -1209,6 +1231,202 @@ export default function Nova() {
         }
 
         .footer-note { text-align: center; color: var(--text-faint); font-size: 11.5px; padding: 26px 0 8px; }
+
+        /* ============================================================
+           AURORA UPGRADE — colour, glass, motion
+           ============================================================ */
+
+        .nova-app::before {
+          content: ""; position: fixed; inset: -50%; z-index: -2; pointer-events: none;
+          background: conic-gradient(from 0deg, rgba(126,152,255,.55), rgba(255,110,214,.45), rgba(64,225,244,.50), rgba(178,120,255,.55), rgba(126,152,255,.55));
+          filter: blur(110px); opacity: .9; animation: auroraSpin 34s linear infinite;
+        }
+        .nova-app::after {
+          content: ""; position: fixed; inset: 0; z-index: -1; pointer-events: none; opacity: .5;
+          background-image: radial-gradient(rgba(255,255,255,.28) 1px, transparent 1px);
+          background-size: 46px 46px;
+          mask-image: radial-gradient(120% 80% at 50% 0%, #000 20%, transparent 75%);
+          animation: gridDrift 32s linear infinite;
+        }
+        @keyframes auroraSpin { to { transform: rotate(360deg); } }
+        @keyframes gridDrift { to { background-position: 46px 46px; } }
+        @keyframes floaty { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-6px); } }
+        @keyframes shimmer { to { background-position: 200% center; } }
+        @keyframes popIn { from { opacity:0; transform: translateY(14px) scale(.97); } to { opacity:1; transform:none; } }
+        @keyframes glowPulse {
+          0%,100% { box-shadow: 0 0 0 0 rgba(142,162,255,.35), 0 10px 40px -12px rgba(142,162,255,.6); }
+          50%     { box-shadow: 0 0 0 10px rgba(142,162,255,0), 0 18px 60px -12px rgba(255,122,217,.6); }
+        }
+
+        /* glassmorphism for every surface */
+        .nova-header, .user-menu, .history-panel, .auth-modal, .proj-card,
+        .msg-bubble, .composer, .contact-row, .about-card, .tabs {
+          backdrop-filter: blur(18px) saturate(150%);
+        }
+
+        .nova-header {
+          background: linear-gradient(90deg, rgba(48,40,110,.55), rgba(30,42,105,.5), rgba(24,64,104,.5)) !important;
+          border-bottom: 1px solid var(--border) !important;
+          box-shadow: 0 8px 40px -20px rgba(0,0,0,.9);
+        }
+
+        /* brand */
+        .brand-mark {
+          background: var(--grad) !important;
+          background-size: 200% 200% !important;
+          animation: shimmer 6s linear infinite, floaty 5s ease-in-out infinite;
+          box-shadow: 0 8px 30px -6px rgba(142,162,255,.75) !important;
+        }
+        .brand-mark:hover { transform: rotate(-8deg) scale(1.08); transition: transform .35s cubic-bezier(.2,.9,.2,1.2); }
+        .brand-text h1 {
+          background: var(--grad); background-size: 200% auto;
+          -webkit-background-clip: text; background-clip: text; color: transparent;
+          animation: shimmer 5s linear infinite; letter-spacing: -0.5px;
+        }
+
+        /* tabs */
+        .tabs { background: rgba(255,255,255,.05); border: 1px solid var(--border); border-radius: 12px; padding: 3px; }
+        .tab-btn {
+          position: relative; border-radius: 9px !important; color: var(--text-dim) !important;
+          transition: color .25s ease, transform .25s ease;
+        }
+        .tab-btn:hover { color: var(--text) !important; transform: translateY(-1px); }
+        .tab-btn.active {
+          color: #0f142e !important; background: var(--grad) !important; background-size: 180% auto !important;
+          animation: shimmer 5s linear infinite; font-weight: 600;
+          box-shadow: 0 6px 22px -8px rgba(142,162,255,.9);
+        }
+
+        /* buttons */
+        .signin-btn, .new-chat-btn, .send-btn, .suggest-chip, .auth-submit, .google-btn, .verify-resend-btn, .icon-btn {
+          transition: transform .22s cubic-bezier(.2,.9,.2,1.2), box-shadow .25s ease, background .25s ease, color .2s ease;
+        }
+        .signin-btn {
+          background: var(--grad) !important; background-size: 200% auto !important;
+          color: #101632 !important; border: none !important; font-weight: 650 !important;
+          animation: shimmer 6s linear infinite;
+        }
+        .signin-btn:hover, .new-chat-btn:hover, .auth-submit:hover {
+          transform: translateY(-2px) scale(1.03);
+          box-shadow: 0 14px 34px -12px rgba(255,122,217,.8);
+        }
+        .send-btn {
+          background: var(--grad) !important; background-size: 200% auto !important; color: #101632 !important;
+          border: none !important; animation: shimmer 6s linear infinite;
+        }
+        .send-btn:hover:not(:disabled) { transform: translateY(-2px) rotate(-6deg) scale(1.08); box-shadow: 0 12px 30px -8px var(--accent-glow); }
+        .send-btn:active:not(:disabled) { transform: scale(.92); }
+
+        /* messages */
+        .msg { animation: popIn .45s cubic-bezier(.2,.9,.2,1.05) both; }
+        .msg-bubble {
+          border: 1px solid var(--border) !important;
+          background: rgba(255,255,255,.11) !important;
+          transition: transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+        }
+        .msg-bubble:hover {
+          transform: translateY(-2px);
+          border-color: rgba(142,162,255,.45) !important;
+          box-shadow: 0 16px 44px -22px rgba(142,162,255,.9);
+        }
+        .msg.user .msg-bubble {
+          background: linear-gradient(135deg, rgba(142,162,255,.28), rgba(255,122,217,.22)) !important;
+          border-color: rgba(142,162,255,.35) !important;
+        }
+        .msg-avatar { box-shadow: 0 6px 18px -8px var(--accent-glow); }
+
+        /* composer */
+        .composer {
+          background: rgba(255,255,255,.11) !important;
+          border: 1px solid var(--border) !important;
+          transition: box-shadow .3s ease, border-color .3s ease, transform .3s ease;
+        }
+        .composer:focus-within {
+          border-color: rgba(142,162,255,.65) !important;
+          box-shadow: 0 0 0 4px rgba(142,162,255,.14), 0 20px 50px -24px rgba(255,122,217,.9);
+          transform: translateY(-1px);
+        }
+        textarea, input { color: var(--text) !important; }
+        textarea::placeholder, input::placeholder { color: var(--text-faint) !important; }
+
+        /* suggestion chips */
+        .suggest-chip {
+          background: rgba(255,255,255,.10) !important; border: 1px solid var(--border) !important;
+          color: var(--text-dim) !important;
+        }
+        .suggest-chip:hover {
+          color: var(--text) !important; transform: translateY(-3px) scale(1.04);
+          border-color: rgba(255,122,217,.55) !important;
+          box-shadow: 0 12px 30px -14px rgba(255,122,217,.9);
+          background: rgba(255,122,217,.12) !important;
+        }
+
+        /* project cards — tilt + sheen */
+        .proj-card {
+          position: relative; overflow: hidden;
+          background: linear-gradient(150deg, rgba(255,255,255,.14), rgba(255,255,255,.05)) !important; border: 1px solid var(--border) !important;
+          transition: transform .4s cubic-bezier(.2,.9,.2,1.05), box-shadow .4s ease, border-color .4s ease;
+        }
+        .proj-card::before {
+          content: ""; position: absolute; inset: -60% -20%; pointer-events: none;
+          background: linear-gradient(115deg, transparent 40%, rgba(255,255,255,.18) 50%, transparent 60%);
+          transform: translateX(-120%); transition: transform .8s ease;
+        }
+        .proj-card:hover::before { transform: translateX(120%); }
+        .proj-card:hover {
+          transform: translateY(-8px) rotateX(4deg) rotateZ(-.4deg) scale(1.015);
+          border-color: rgba(142,162,255,.5) !important;
+          box-shadow: 0 30px 70px -30px rgba(142,162,255,.9), 0 0 0 1px rgba(255,255,255,.05) inset;
+        }
+        .proj-icon, .proj-card svg { color: var(--accent-3); }
+        .stack-pill, .tag {
+          background: rgba(142,162,255,.14) !important; border: 1px solid rgba(142,162,255,.28) !important;
+          color: #cfd7ff !important; transition: transform .2s ease, background .2s ease;
+        }
+        .stack-pill:hover, .tag:hover { transform: translateY(-2px); background: rgba(255,122,217,.18) !important; }
+
+        /* modals */
+        .modal-backdrop { background: rgba(10,14,34,.7) !important; backdrop-filter: blur(8px) !important; }
+        .auth-modal, .history-panel {
+          background: linear-gradient(160deg, rgba(52,44,120,.92), rgba(28,42,104,.92)) !important; border: 1px solid var(--border) !important;
+          box-shadow: 0 40px 100px -40px #000; animation: popIn .35s cubic-bezier(.2,.9,.2,1.05) both;
+        }
+        .history-item { transition: transform .2s ease, background .2s ease; border-radius: 10px; }
+        .history-item:hover { transform: translateX(4px); background: rgba(255,255,255,.09) !important; }
+        .history-item.active { background: linear-gradient(90deg, rgba(142,162,255,.22), transparent) !important; }
+
+        /* links + misc */
+        a { color: var(--accent-3); }
+        a:hover { color: var(--accent-2); }
+        .contact-row { background: rgba(255,255,255,.07) !important; transition: transform .25s ease, box-shadow .25s ease; }
+        .contact-row:hover { transform: translateY(-2px); box-shadow: 0 14px 34px -18px rgba(78,226,245,.9); }
+        .status-dot { box-shadow: 0 0 12px var(--green) !important; }
+        .load-screen { background: linear-gradient(160deg, #141a35, #1b2350) !important; }
+        .load-mark { background: var(--grad) !important; background-size: 200% auto !important; animation: shimmer 4s linear infinite, glowPulse 2.6s ease-in-out infinite; }
+        code, pre { background: rgba(255,255,255,.08) !important; border: 1px solid var(--border) !important; color: #dfe4ff !important; }
+
+        /* scrollbar */
+        ::-webkit-scrollbar { width: 10px; height: 10px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: linear-gradient(180deg, rgba(142,162,255,.55), rgba(255,122,217,.55)); border-radius: 99px; border: 2px solid transparent; background-clip: padding-box; }
+        ::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #8ea2ff, #ff7ad9); background-clip: padding-box; }
+        ::selection { background: rgba(255,122,217,.35); color: #fff; }
+
+        .proj-card > *:first-child { position: relative; z-index: 1; }
+        .proj-card::after {
+          content: ""; position: absolute; top: 0; left: 0; right: 0; height: 3px;
+          background: var(--grad); background-size: 200% auto; animation: shimmer 5s linear infinite;
+          opacity: .85;
+        }
+        .nova-header::after {
+          content: ""; position: absolute; left: 0; right: 0; bottom: -1px; height: 2px;
+          background: var(--grad); background-size: 200% auto; animation: shimmer 6s linear infinite; opacity: .9;
+        }
+        .load-screen { background: linear-gradient(160deg, #232c62, #3a2a7a 60%, #1d2456) !important; }
+
+        @media (prefers-reduced-motion: reduce) {
+          * { animation-duration: .001ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; }
+        }
       `}</style>
     </div>
   );
