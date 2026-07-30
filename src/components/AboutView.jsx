@@ -1,5 +1,6 @@
 import { Mail, MessageCircle, AtSign } from "lucide-react";
 import { CONTACT } from "../lib/content.js";
+import profileImage from "./img.jpeg";
 
 const CAPABILITIES = [
   "Wide-ranging conversations — not limited to site FAQs",
@@ -19,7 +20,10 @@ export default function AboutView() {
       <div className="card">
         <div className="profile">
           <div className="avatar">
-            <img src="img.jpeg" alt="shashwat pandey" />
+            <img
+              src={profileImage}
+              alt="Shashwat Pandey"
+            />
           </div>
 
           <div>
@@ -74,10 +78,7 @@ export default function AboutView() {
             WhatsApp
           </a>
 
-          <a
-            className="link-item"
-            href={`mailto:${CONTACT.email}`}
-          >
+          <a className="link-item" href={`mailto:${CONTACT.email}`}>
             <Mail size={14} />
             {CONTACT.email}
           </a>
