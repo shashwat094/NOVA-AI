@@ -1,4 +1,4 @@
-import { Mail, MessageCircle, AtSign } from "lucide-react";
+import { Mail, MessageCircle } from "lucide-react";
 import { CONTACT } from "../lib/content.js";
 import profileImage from "./img.jpeg";
 
@@ -43,10 +43,6 @@ export default function AboutView() {
           (2023–2026).
         </p>
 
-        <p>
-          Currently open to software and web development internship opportunities.
-        </p>
-
         <div className="tags">
           {["PHP", "MySQL", "React", "React Native", "Node.js", "Firebase"].map(
             (tech) => (
@@ -60,16 +56,6 @@ export default function AboutView() {
         <div className="links">
           <a
             className="link-item"
-            href={CONTACT.instagram}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <AtSign size={14} />
-            Instagram
-          </a>
-
-          <a
-            className="link-item"
             href={CONTACT.whatsapp}
             target="_blank"
             rel="noopener noreferrer"
@@ -78,7 +64,10 @@ export default function AboutView() {
             WhatsApp
           </a>
 
-          <a className="link-item" href={`mailto:${CONTACT.email}`}>
+          <a
+            className="link-item"
+            href={`mailto:${CONTACT.email}`}
+          >
             <Mail size={14} />
             {CONTACT.email}
           </a>
