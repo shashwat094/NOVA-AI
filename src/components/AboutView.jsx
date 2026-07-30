@@ -18,7 +18,7 @@ export default function AboutView() {
 
       <div className="card">
         <div className="profile">
-          <div className="avatar">SP</div>
+          <div className="avatar"><img src="img.jpeg" alt="shashwat pandey"/></div>
           <div>
             <h3>Shashwat Pandey</h3>
             <div className="role">Developer · Satna, MP</div>
