@@ -20,7 +20,7 @@ export default function AboutView() {
         <div className="profile">
           <div className="avatar">
             <img
-              src="/img.jpeg"
+              src="img.jpeg"
               alt="Shashwat Pandey"
             />
           </div>
